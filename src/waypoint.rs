@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Waypoint<TString> {
     pub name: TString,
     pub latitude: f64,
