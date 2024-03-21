@@ -85,3 +85,140 @@ fn altitude(input: &str) -> IResult<&str, u16> {
 fn description(input: &str) -> IResult<&str, &str> {
     not_line_ending(input)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_approx_eq::assert_approx_eq;
+    use nom::error::{Error, ErrorKind};
+    use nom::Err;
+
+    #[test]
+    fn test_parse() {
+        let waypoints = parse(
+            r#"$FormatGEO
+AAT054    N 36 16 36.42    E 140 08 43.50   540  ASIO HG TO
+ACT052    N 36 16 10.11    E 140 08 28.70   524  COO TO
+"#,
+        )
+        .unwrap();
+        assert_eq!(waypoints.len(), 2);
+
+        assert_eq!(
+            parse(
+                r#"$FormatGEO
+AAT054    N 36 16 36.42    E 140 08 43.50   540  ASIO HG TO
+ACT052    N 36 16 10.11    E 140 08 28.70   524  COO TO
+X"#,
+            ),
+            Err(Err::Error(Error::new("X", ErrorKind::Eof)))
+        );
+    }
+
+    #[test]
+    fn test_waypoints() {
+        assert_eq!(waypoints("$FormatGEO\n"), Ok(("", vec![])));
+        let (_, waypoints) = waypoints(
+            r#"$FormatGEO
+AAT054    N 36 16 36.42    E 140 08 43.50   540  ASIO HG TO
+ACT052    N 36 16 10.11    E 140 08 28.70   524  COO TO
+"#,
+        )
+        .unwrap();
+        assert_eq!(waypoints.len(), 2);
+    }
+
+    #[test]
+    fn test_header() {
+        assert_eq!(header("$FormatGEO\nAAT054"), Ok(("AAT054", ())));
+        assert_eq!(
+            header("$FormatGEO"),
+            Err(Err::Error(Error::new("", ErrorKind::CrLf)))
+        );
+        assert_eq!(
+            header("$FormatGEOX\nAAT054"),
+            Err(Err::Error(Error::new("X\nAAT054", ErrorKind::CrLf)))
+        );
+    }
+
+    #[test]
+    fn test_waypoint() {
+        let (
+            _,
+            Waypoint {
+                name,
+                latitude,
+                longitude,
+                altitude,
+                description,
+            },
+        ) = waypoint("AAT054    N 36 16 36.42    E 140 08 43.50   540  ASIO HG TO\n").unwrap();
+        assert_eq!(name, "AAT054");
+        assert_approx_eq!(latitude, 36.276783);
+        assert_approx_eq!(longitude, 140.145417);
+        assert_eq!(altitude, 540);
+        assert_eq!(description, "ASIO HG TO");
+
+        assert_eq!(
+            waypoint("AAT054    N 36 16 36.42    E 140 08 43.50   XXX  ASIO HG TO\n"),
+            Err(Err::Error(Error::new(
+                "XXX  ASIO HG TO\n",
+                ErrorKind::Digit
+            )))
+        )
+    }
+
+    #[test]
+    fn test_name() {
+        assert_eq!(name("AAT054 "), Ok((" ", "AAT054")));
+    }
+
+    #[test]
+    fn test_latitude() {
+        assert_approx_eq!(latitude("N 36 16 36.42").unwrap().1, 36.276783);
+        assert_approx_eq!(latitude("S 36 16 36.42").unwrap().1, -36.276783);
+        assert_eq!(
+            latitude("N 36 16 36"),
+            Err(Err::Error(Error::new("", ErrorKind::Char)))
+        );
+    }
+
+    #[test]
+    fn test_longitude() {
+        assert_approx_eq!(longitude("E 140 08 43.50").unwrap().1, 140.145417);
+        assert_approx_eq!(longitude("W 140 08 43.50").unwrap().1, -140.145417);
+        assert_eq!(
+            longitude("140 08 43.50"),
+            Err(Err::Error(Error::new("140 08 43.50", ErrorKind::OneOf)))
+        );
+    }
+
+    #[test]
+    fn test_degree() {
+        assert_approx_eq!(degree("140 08 43.50").unwrap().1, 140.145417);
+        assert_approx_eq!(degree("36 16 36.42").unwrap().1, 36.276783);
+        assert_eq!(
+            degree("E 140 08 43.50"),
+            Err(Err::Error(Error::new("E 140 08 43.50", ErrorKind::Digit)))
+        );
+    }
+
+    #[test]
+    fn test_altitude() {
+        assert_eq!(altitude("540 "), Ok((" ", 540)));
+        assert_eq!(altitude("1280"), Ok(("", 1280)));
+        assert_eq!(
+            altitude("A"),
+            Err(Err::Error(Error::new("A", ErrorKind::Digit)))
+        );
+    }
+
+    #[test]
+    fn test_description() {
+        assert_eq!(
+            description("ASIO HG TO\nACT052"),
+            Ok(("\nACT052", "ASIO HG TO"))
+        );
+        assert_eq!(description("ASIO HG TO"), Ok(("", "ASIO HG TO")));
+    }
+}
