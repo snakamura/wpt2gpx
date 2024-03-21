@@ -27,7 +27,7 @@ where
     TString: AsRef<str>,
     W: io::Write,
 {
-    for waypoint in waypoints.iter() {
+    for waypoint in waypoints {
         format_waypoint(waypoint, writer)?;
     }
     Ok(())
