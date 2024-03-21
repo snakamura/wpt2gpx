@@ -8,14 +8,14 @@ use nom::multi::many0;
 use nom::sequence::{preceded, tuple};
 use nom::IResult;
 
-pub fn parse(input: &str) -> Result<Vec<Waypoint<String>>, String> {
+pub fn parse(input: &str) -> Result<Vec<Waypoint<&str>>, String> {
     match all_consuming(waypoints)(input) {
         Ok((_, waypoints)) => Ok(waypoints),
         Err(e) => Err(e.to_string()),
     }
 }
 
-fn waypoints(input: &str) -> IResult<&str, Vec<Waypoint<String>>> {
+fn waypoints(input: &str) -> IResult<&str, Vec<Waypoint<&str>>> {
     preceded(header, many0(waypoint))(input)
 }
 
@@ -23,7 +23,7 @@ fn header(input: &str) -> IResult<&str, ()> {
     map(tuple((tag("$FormatGEO"), line_ending)), |_| ())(input)
 }
 
-fn waypoint(input: &str) -> IResult<&str, Waypoint<String>> {
+fn waypoint(input: &str) -> IResult<&str, Waypoint<&str>> {
     map(
         tuple((
             name,
@@ -38,11 +38,11 @@ fn waypoint(input: &str) -> IResult<&str, Waypoint<String>> {
             line_ending,
         )),
         |(name, _, latitude, _, longitude, _, altitude, _, description, _)| Waypoint {
-            name: name.to_string(),
+            name: name,
             latitude,
             longitude,
             altitude,
-            description: description.to_string(),
+            description: description,
         },
     )(input)
 }
