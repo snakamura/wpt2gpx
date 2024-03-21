@@ -4,14 +4,16 @@ use nom::character::complete::{
     alphanumeric1, char, line_ending, not_line_ending, one_of, space1, u16,
 };
 use nom::combinator::{all_consuming, map};
+use nom::error::Error;
 use nom::multi::many0;
 use nom::sequence::{preceded, tuple};
+use nom::Err;
 use nom::IResult;
 
-pub fn parse(input: &str) -> Result<Vec<Waypoint<&str>>, String> {
+pub fn parse(input: &str) -> Result<Vec<Waypoint<&str>>, Err<Error<&str>>> {
     match all_consuming(waypoints)(input) {
         Ok((_, waypoints)) => Ok(waypoints),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(e),
     }
 }
 
