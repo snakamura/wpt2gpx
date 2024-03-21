@@ -1,4 +1,4 @@
-use crate::waypoint::Waypoint;
+use super::super::waypoint::Waypoint;
 use quick_xml::events::BytesText;
 use quick_xml::writer::Writer;
 use quick_xml::Error;

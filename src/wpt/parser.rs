@@ -1,4 +1,4 @@
-use crate::waypoint::Waypoint;
+use super::super::waypoint::Waypoint;
 use nom::bytes::complete::tag;
 use nom::character::complete::{
     alphanumeric1, char, line_ending, not_line_ending, one_of, space1, u16,
