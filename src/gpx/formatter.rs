@@ -31,19 +31,7 @@ where
                             ))?;
                         writer
                             .create_element("name")
-                            .write_text_content(BytesText::new(
-                                format!(
-                                    "{}{}{}",
-                                    waypoint.name.as_ref(),
-                                    if waypoint.description.as_ref().is_empty() {
-                                        ""
-                                    } else {
-                                        " "
-                                    },
-                                    waypoint.description.as_ref()
-                                )
-                                .as_str(),
-                            ))?;
+                            .write_text_content(BytesText::new(&waypoint.display_name()))?;
                         Ok(())
                     })?;
             }
