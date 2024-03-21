@@ -4,7 +4,10 @@ use quick_xml::writer::Writer;
 use quick_xml::Error;
 use std::io;
 
-pub fn format(waypoints: &[Waypoint]) -> Result<Vec<u8>, Error> {
+pub fn format<TString>(waypoints: &[Waypoint<TString>]) -> Result<Vec<u8>, Error>
+where
+    TString: AsRef<str>,
+{
     let mut writer = Writer::new_with_indent(io::Cursor::new(Vec::<u8>::new()), b' ', 2);
     writer
         .create_element("gpx")
@@ -31,13 +34,13 @@ pub fn format(waypoints: &[Waypoint]) -> Result<Vec<u8>, Error> {
                             .write_text_content(BytesText::new(
                                 format!(
                                     "{}{}{}",
-                                    waypoint.name,
-                                    if waypoint.description.is_empty() {
+                                    waypoint.name.as_ref(),
+                                    if waypoint.description.as_ref().is_empty() {
                                         ""
                                     } else {
                                         " "
                                     },
-                                    waypoint.description
+                                    waypoint.description.as_ref()
                                 )
                                 .as_str(),
                             ))?;
