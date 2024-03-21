@@ -21,3 +21,30 @@ impl<TString> Waypoint<TString> {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const WAYPOINT: Waypoint<&str> = Waypoint {
+        name: "AAT054",
+        latitude: 36.276783,
+        longitude: 140.145417,
+        altitude: 540,
+        description: "ASIO HG TO",
+    };
+
+    #[test]
+    fn test_display_name() {
+        assert_eq!(WAYPOINT.display_name(), "AAT054 ASIO HG TO");
+    }
+
+    #[test]
+    fn test_display_name_no_description() {
+        let waypoint = Waypoint {
+            description: "",
+            ..WAYPOINT
+        };
+        assert_eq!(waypoint.display_name(), "AAT054");
+    }
+}
